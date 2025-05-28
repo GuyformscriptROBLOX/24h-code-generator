@@ -1,0 +1,27 @@
+name: Generate 24h Code
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # codziennie o 6:00 UTC
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Generate code
+        run: |
+          CODE=$(cat /dev/urandom | tr -dc 'A-Z0-9' | fold -w 8 | head -n 1)
+          EXPIRY=$(date -u -d "+24 hours" +"%Y-%m-%dT%H:%M:%SZ")
+          echo "{\"code\": \"$CODE\", \"expiresAt\": \"$EXPIRY\"}" > codes/code.json
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add codes/code.json
+          git commit -m "Update 24h code"
+          git push
